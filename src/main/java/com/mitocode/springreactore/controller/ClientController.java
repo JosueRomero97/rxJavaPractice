@@ -15,6 +15,7 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.reactive.WebFluxLinkBuilder;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -141,6 +142,11 @@ public class ClientController {
                 .zipWith(monoLink,(d,link)-> EntityModel.of(d,link));
     }
 
+
+    @PostMapping("/v1/upload/{id}")
+    public Mono<ResponseEntity<ClientDto>> uploadV1(@PathVariable("id") String id, FilePart filePart){
+
+    }
 
     private ClientDto convertToDto(Client model){
         return modelMapper.map(model,ClientDto.class);
