@@ -1,14 +1,13 @@
 package com.mitocode.springreactore.controller;
 
-import com.mitocode.springreactore.dto.DishDto;
-import com.mitocode.springreactore.model.Dish;
+import com.mitocode.springreactore.dto.InvoiceDto;
+import com.mitocode.springreactore.model.Invoice;
 import com.mitocode.springreactore.pagination.PageSupport;
-import com.mitocode.springreactore.service.IDishService;
+import com.mitocode.springreactore.service.IInvoiceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
@@ -23,18 +22,18 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/dishes")
+@RequestMapping("/invoices")
 @RequiredArgsConstructor
-public class DishController {
-    private  final IDishService iDishService;
+public class InvoiceController {
+    private  final IInvoiceService iInvoiceService;
 
-    @Qualifier("defaultMapper")
+    @Qualifier("invoiceMapper")
     private final ModelMapper modelMapper;
 
     @GetMapping
-    public Mono<ResponseEntity<Flux<DishDto>>> findAll(){
+    public Mono<ResponseEntity<Flux<InvoiceDto>>> findAll(){
 
-        Flux<DishDto> fx = iDishService.findAll()
+        Flux<InvoiceDto> fx = iInvoiceService.findAll()
                 .map(this::convertToDto);
         return Mono.just(ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -43,19 +42,29 @@ public class DishController {
     }
 
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<DishDto>> findById(@PathVariable("id") String id){
-        return iDishService.findById(id).
+    public Mono<ResponseEntity<InvoiceDto>> findById(@PathVariable("id") String id){
+        return iInvoiceService.findById(id).
                 map(this::convertToDto).
                 map(e -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(e))
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
-    
+
+
+    @GetMapping("/generateReport")
+    public Mono<ResponseEntity<byte[]>> generateReport(@RequestParam("id") String id){
+        return iInvoiceService.generateReport(id)
+                .map(bytes-> ResponseEntity
+                        .ok()
+                        .contentType(MediaType.APPLICATION_PDF)//APPLICATION_OCTET_STREAM APPLICATION_PDF
+                        .body(bytes))
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
 
     @PostMapping
-    public Mono<ResponseEntity<DishDto>> save(@Valid @RequestBody DishDto dishDto, final ServerHttpRequest req){
-        return iDishService.save(this.convertToDocument(dishDto))
+    public Mono<ResponseEntity<InvoiceDto>> save(@Valid @RequestBody InvoiceDto invoiceDto, final ServerHttpRequest req){
+        return iInvoiceService.save(this.convertToDocument(invoiceDto))
                 .map(this::convertToDto)
                 .map(e->ResponseEntity.created(
                                 URI.create(req.getURI().toString().concat("/").concat(e.getId()))
@@ -66,14 +75,14 @@ public class DishController {
     }
 
     @PutMapping("/{id}")
-    public Mono<ResponseEntity<DishDto>> update(@PathVariable("id") String id, @RequestBody DishDto dishDto){
+    public Mono<ResponseEntity<InvoiceDto>> update(@PathVariable("id") String id, @RequestBody InvoiceDto invoiceDto){
 
-       return Mono.just(convertToDocument(dishDto))
+       return Mono.just(convertToDocument(invoiceDto))
                         .map(e->{
                             e.setId(id);
                             return e;
                         })
-               .flatMap(e-> iDishService.update(id,e))
+               .flatMap(e-> iInvoiceService.update(id,e))
                .map(this::convertToDto)
                .map(e-> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)
@@ -84,7 +93,7 @@ public class DishController {
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> delete(@PathVariable("id") String id){
 
-        return iDishService.delete(id)
+        return iInvoiceService.delete(id)
                 .flatMap(result ->{
                     if (result){ return Mono.just(ResponseEntity.noContent().build());}
                     else{ return Mono.just(ResponseEntity.notFound().build());}
@@ -92,11 +101,11 @@ public class DishController {
     }
 
     @GetMapping("pageable")
-    public Mono<ResponseEntity<PageSupport<DishDto>>> getPage(
+    public Mono<ResponseEntity<PageSupport<InvoiceDto>>> getPage(
             @RequestParam(name = "page",defaultValue = "0") int page,
             @RequestParam(name = "size",defaultValue = "2") int size
     ){
-        return iDishService.obtenerPagina(PageRequest.of(page,size))
+        return iInvoiceService.obtenerPagina(PageRequest.of(page,size))
                 .map(pageSupport -> new PageSupport<>(
                         pageSupport.getContent().stream().map(this::convertToDto).toList(),
                         pageSupport.getPageNumber(),
@@ -109,43 +118,43 @@ public class DishController {
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
-    private DishDto dishHateoas;
+    private InvoiceDto invoiceHateoas;
 
     @GetMapping("/hateoas/v1/{id}")
-    private Mono<EntityModel<DishDto>> getHateOasV1(@PathVariable("id") String id){
-        Mono<Link> monoLink = WebFluxLinkBuilder.linkTo(WebFluxLinkBuilder.methodOn(DishController.class).findById(id)).withRel("dish-info").toMono();
+    private Mono<EntityModel<InvoiceDto>> getHateOasV1(@PathVariable("id") String id){
+        Mono<Link> monoLink = WebFluxLinkBuilder.linkTo(WebFluxLinkBuilder.methodOn(InvoiceController.class).findById(id)).withRel("Invoice-info").toMono();
         //practica comun y no recomendad
-        return iDishService.findById(id)
+        return iInvoiceService.findById(id)
                 .map(this::convertToDto)
                 .flatMap(d->{
-                    this.dishHateoas=d;
+                    this.invoiceHateoas=d;
                     return monoLink;
                 })
-                .map(link -> EntityModel.of(this.dishHateoas,link));
+                .map(link -> EntityModel.of(this.invoiceHateoas,link));
     }
 
     @GetMapping("/hateoas/v2/{id}")
-    private Mono<EntityModel<DishDto>> getHateOasV2(@PathVariable("id") String id){
-        Mono<Link> monoLink = WebFluxLinkBuilder.linkTo(WebFluxLinkBuilder.methodOn(DishController.class).findById(id)).withRel("dish-info-2").toMono();
-        return iDishService.findById(id)
+    private Mono<EntityModel<InvoiceDto>> getHateOasV2(@PathVariable("id") String id){
+        Mono<Link> monoLink = WebFluxLinkBuilder.linkTo(WebFluxLinkBuilder.methodOn(InvoiceController.class).findById(id)).withRel("Invoice-info-2").toMono();
+        return iInvoiceService.findById(id)
                 .map(this::convertToDto)
                 .flatMap(d-> monoLink.map(link -> EntityModel.of(d,link)));
     }
 
     @GetMapping("/hateoas/v3/{id}")
-    private Mono<EntityModel<DishDto>> getHateOasV3(@PathVariable("id") String id){
-        Mono<Link> monoLink = WebFluxLinkBuilder.linkTo(WebFluxLinkBuilder.methodOn(DishController.class).findById(id)).withRel("dish-info-2").toMono();
+    private Mono<EntityModel<InvoiceDto>> getHateOasV3(@PathVariable("id") String id){
+        Mono<Link> monoLink = WebFluxLinkBuilder.linkTo(WebFluxLinkBuilder.methodOn(InvoiceController.class).findById(id)).withRel("Invoice-info-2").toMono();
 
-        return iDishService.findById(id)
+        return iInvoiceService.findById(id)
                 .map(this::convertToDto)
                 .zipWith(monoLink,(d,link)-> EntityModel.of(d,link));
     }
 
 
-    private DishDto convertToDto(Dish model){
-        return modelMapper.map(model,DishDto.class);
+    private InvoiceDto convertToDto(Invoice model){
+        return modelMapper.map(model,InvoiceDto.class);
     }
-    private Dish convertToDocument(DishDto dto){
-        return modelMapper.map(dto,Dish.class);
+    private Invoice convertToDocument(InvoiceDto dto){
+        return modelMapper.map(dto,Invoice.class);
     }
 }

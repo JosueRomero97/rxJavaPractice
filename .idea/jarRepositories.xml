@@ -17,6 +17,11 @@
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="jaspersoft-repo" />
+      <option name="name" value="jaspersoft-repo" />
+      <option name="url" value="https://jaspersoft.jfrog.io/jaspersoft/jaspersoft-repo" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="central" />
       <option name="name" value="webfija-mvn-prod" />
       <option name="url" value="https://devopstdp.eastus2.cloudapp.azure.com/artifactory/webfija-mvn-prod" />

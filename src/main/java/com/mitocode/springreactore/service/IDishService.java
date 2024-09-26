@@ -8,4 +8,6 @@ import reactor.core.publisher.Mono;
 
 public interface IDishService extends IGenericService<Dish,String> {
 
+
+
 }

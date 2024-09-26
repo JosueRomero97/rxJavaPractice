@@ -62,7 +62,7 @@ public class WebExceptionHandler extends AbstractErrorWebExceptionHandler {
             }
             default -> {
                 customError.put("msg",error.getMessage());
-                customError.put("status",99);
+                customError.put("status",418);
                 httpStatus = HttpStatus.I_AM_A_TEAPOT;
             }
         }

@@ -16,11 +16,11 @@ public class PageSupport<T> {
     public static final String DEFAULT_PAGE_SIZE = "10";
 
     private List<T> content;
-    private int pageNumber;
+    private int pageNumber;//pagina q me encuentro
     private int pageSize;
     private long totalElements;
 
-    @JsonProperty
+    @JsonProperty //un atributo más en la salida del json
     public long totalPage(){
         return pageSize>0?(totalElements-1)/ pageSize + 1 : 0;
     }
@@ -34,5 +34,9 @@ public class PageSupport<T> {
     public boolean last(){
          return (pageNumber+1)*pageSize >= totalElements;
     }
+
+
+
+
 
 }
